@@ -62,7 +62,8 @@ static void init_save_dir(void)
 	char savepath[1024];
 
 	/* Get an absolute path from the filename */
-	path_parse(dirpath, 1024, PRIVATE_USER_PATH);
+	//path_parse(dirpath, 1024, getenv("HOME"));
+	path_parse(dirpath, 1024, getenv("TOMEHOME"));
 	strcpy(versionpath, dirpath);
 	strcat(versionpath, USER_PATH_VERSION);
 	strcpy(savepath, versionpath);
