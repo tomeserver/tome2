@@ -55,6 +55,8 @@ using squelch::SvalCondition;
 using squelch::NameCondition;
 using squelch::StatusCondition;
 
+using boost::filesystem::portable_name;
+
 static squelch::Automatizer *automatizer = nullptr;
 
 void squeltch_grid(void)
@@ -182,43 +184,55 @@ static void automatizer_save_rules()
 		return;
 	}
 
-	// Build the filename
-	path_build(buf, 1024, ANGBAND_DIR_USER, name);
-		
-	if (file_exist(buf))
+	if (! portable_name(std::string(name)))
 	{
-		c_put_str(TERM_WHITE, "File exists, continue?[y/n]",
+		c_put_str(TERM_WHITE, "Saving rules failed!       ",
 			  hgt / 2,
 			  wid / 2 - 14);
-		ch = inkey();
-		if ((ch != 'Y') && (ch != 'y'))
-		{
-			return;
-		}
+		/* Wait for keypress to allow message to be displayed */
+		inkey();
 	}
 
-	// Write to file
+	else
 	{
-		auto rules_json = automatizer->to_json();
+		// Build the filename
+		path_build(buf, 1024, ANGBAND_DIR_USER, name);
 
-		int status = json_dump_file(rules_json.get(), buf,
-					    JSON_INDENT(2) |
-					    JSON_SORT_KEYS);
-		if (status == 0)
+		if (file_exist(buf))
 		{
-			c_put_str(TERM_WHITE, "Saved rules in file        ",
+			c_put_str(TERM_WHITE, "File exists, continue?[y/n]",
 				  hgt / 2,
 				  wid / 2 - 14);
-		}
-		else
-		{
-			c_put_str(TERM_WHITE, "Saving rules failed!       ",
-				  hgt / 2,
-				  wid / 2 - 14);
+			ch = inkey();
+			if ((ch != 'Y') && (ch != 'y'))
+			{
+				return;
+			}
 		}
 
-		// Wait for keypress
-		inkey();
+		// Write to file
+		{
+			auto rules_json = automatizer->to_json();
+
+			int status = json_dump_file(rules_json.get(), buf,
+						    JSON_INDENT(2) |
+						    JSON_SORT_KEYS);
+			if (status == 0)
+			{
+				c_put_str(TERM_WHITE, "Saved rules in file        ",
+					  hgt / 2,
+					  wid / 2 - 14);
+			}
+			else
+			{
+				c_put_str(TERM_WHITE, "Saving rules failed!       ",
+					  hgt / 2,
+					  wid / 2 - 14);
+			}
+
+			// Wait for keypress
+			inkey();
+		}
 	}
 }
 

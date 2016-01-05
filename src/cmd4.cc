@@ -43,6 +43,8 @@
 #include <vector>
 #include <algorithm>
 
+using boost::filesystem::portable_name;
+
 /*
  * Hack -- redraw the screen
  *
@@ -1127,11 +1129,11 @@ static void do_cmd_pref_file_hack(int row)
 	if (!askfor_aux(ftmp, 80)) return;
 
 	/* Process the given filename */
-	if (boost::filesystem::portable_name(std::string(ftmp)) && \
-		0 == process_pref_file(ftmp))
+	if (portable_name(std::string(ftmp)) && 0 == process_pref_file(ftmp))
 	{
 		msg_format("Loaded '%s'.", ftmp);
 	}
+
 	else
 	{
 		msg_format("Failed to load '%s'!", ftmp);
@@ -1230,7 +1232,7 @@ void do_cmd_options(void)
 				/* Ask for a file */
 				if (!askfor_aux(ftmp, 80)) continue;
 
-				if (boost::filesystem::portable_name(std::string(ftmp)) && \
+				if (portable_name(std::string(ftmp)) && \
 					0 == option_dump(ftmp))
 				{
 					msg_print("Done.");
@@ -1646,7 +1648,6 @@ void do_cmd_macros(void)
 	int i;
 
 	char tmp[1024];
-	char ftmp[80];
 
 	char buf[1024];
 
@@ -1715,23 +1716,23 @@ void do_cmd_macros(void)
 			prt("File: ", 18, 0);
 
 			/* Default filename */
-			strnfmt(ftmp, 80, "%s.prf", player_name);
+			strnfmt(tmp, 1024, "%s.prf", player_name);
 
 			/* Ask for a file */
-			if (!askfor_aux(ftmp, 80)) continue;
+			if (!askfor_aux(tmp, 1024)) continue;
 
 			/* Process the given filename */
-			if (boost::filesystem::portable_name(std::string(ftmp)) && \
-				0 == process_pref_file(ftmp))
+			if (portable_name(std::string(tmp)) && \
+				0 == process_pref_file(tmp))
 			{
 				/* Success */
-				msg_format("Loaded '%s'.", ftmp);
+				msg_format("Loaded '%s'.", tmp);
 			}
 
 			else
 			{
 				/* Failure */
-				msg_format("Failed to load '%s'!", ftmp);
+				msg_format("Failed to load '%s'!", tmp);
 			}
 		}
 
@@ -1751,7 +1752,7 @@ void do_cmd_macros(void)
 			if (!askfor_aux(tmp, 80)) continue;
 
 			/* Dump the macros */
-			if (boost::filesystem::portable_name(std::string(tmp)) && \
+			if (portable_name(std::string(tmp)) && \
 				0 == macro_dump(tmp))
 			{
 				/* Success */
@@ -1876,7 +1877,7 @@ void do_cmd_macros(void)
 			/* Ask for a file */
 			if (!askfor_aux(tmp, 80)) continue;
 
-			if (boost::filesystem::portable_name(std::string(tmp)) && \
+			if (portable_name(std::string(tmp)) && \
 				0 == keymap_dump(tmp))
 			{
 				/* Success */
@@ -2093,12 +2094,13 @@ void do_cmd_visuals(void)
 			if (!askfor_aux(tmp, 70)) continue;
 
 			/* Process the given filename */
-			if (boost::filesystem::portable_name(std::string(tmp)) && \
+			if (portable_name(std::string(tmp)) && \
 				0 == process_pref_file(tmp))
 			{
 				/* Success */
 				msg_format("Loaded '%s'.", tmp);
 			}
+
 			else
 			{
 				/* Failure */
@@ -2122,13 +2124,13 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			if (! boost::filesystem::portable_name(std::string(tmp)))
+			if (! portable_name(std::string(tmp)))
 			{
 				msg_format("Failed to write '%s'!", tmp);
 			}
 
 			else
-				{
+			{
 
 				/* Build the filename */
 				path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
@@ -2192,7 +2194,7 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			if (! boost::filesystem::portable_name(std::string(tmp)))
+			if (! portable_name(std::string(tmp)))
 			{
 				msg_format("Failed to write '%s'!", tmp);
 			}
@@ -2262,7 +2264,7 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			if (! boost::filesystem::portable_name(std::string(tmp)))
+			if (! portable_name(std::string(tmp)))
 			{
 				msg_format("Failed to write '%s'!", tmp);
 			}
@@ -2576,7 +2578,7 @@ void do_cmd_colors(void)
 			if (!askfor_aux(tmp, 70)) continue;
 
 			/* Process the given filename */
-			if (boost::filesystem::portable_name(std::string(tmp)) && \
+			if (portable_name(std::string(tmp)) && \
 				0 == process_pref_file(tmp))
 			{
 				msg_format("Loaded '%s'.", tmp);
@@ -2608,7 +2610,7 @@ void do_cmd_colors(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			if (! boost::filesystem::portable_name(std::string(tmp)))
+			if (! portable_name(std::string(tmp)))
 			{
 				msg_format("Failed to write '%s'!", tmp);
 			}
