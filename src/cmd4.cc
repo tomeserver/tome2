@@ -1107,7 +1107,7 @@ static errr option_dump(cptr fname)
  * This function should only be used by standard interaction commands,
  * in which a standard "Command:" prompt is present on the given row.
  *
- * Allow absolute file names?  XXX XXX XXX
+ * Absolute file names are not allowed.
  */
 static void do_cmd_pref_file_hack(int row)
 {
@@ -1127,16 +1127,16 @@ static void do_cmd_pref_file_hack(int row)
 	if (!askfor_aux(ftmp, 80)) return;
 
 	/* Process the given filename */
-	if (process_pref_file(ftmp))
+	if (boost::filesystem::portable_name(std::string(ftmp)) && \
+		0 == process_pref_file(ftmp))
 	{
-		/* Mention failure */
-		msg_format("Failed to load '%s'!", ftmp);
+		msg_format("Loaded '%s'.", ftmp);
 	}
 	else
 	{
-		/* Mention success */
-		msg_format("Loaded '%s'.", ftmp);
+		msg_format("Failed to load '%s'!", ftmp);
 	}
+
 }
 
 
@@ -1169,7 +1169,7 @@ void do_cmd_options(void)
 		prt("(3) Game-Play Options", 6, 5);
 		prt("(4) Efficiency Options", 7, 5);
 		prt("(5) ToME Options", 8, 5);
-		prt("(6) Birth Options(read only)", 9, 5);
+		prt("(6) Birth Options (read only)", 9, 5);
 
 		/* Special choices */
 		prt("(D) Base Delay Factor", 10, 5);
@@ -1230,16 +1230,15 @@ void do_cmd_options(void)
 				/* Ask for a file */
 				if (!askfor_aux(ftmp, 80)) continue;
 
-				/* Dump the options */
-				if (option_dump(ftmp))
+				if (boost::filesystem::portable_name(std::string(ftmp)) && \
+					0 == option_dump(ftmp))
 				{
-					/* Failure */
-					msg_print("Failed!");
+					msg_print("Done.");
 				}
+
 				else
 				{
-					/* Success */
-					msg_print("Done.");
+					msg_format("Failed to write '%s'!", ftmp);
 				}
 
 				break;
@@ -1647,6 +1646,7 @@ void do_cmd_macros(void)
 	int i;
 
 	char tmp[1024];
+	char ftmp[80];
 
 	char buf[1024];
 
@@ -1715,16 +1715,23 @@ void do_cmd_macros(void)
 			prt("File: ", 18, 0);
 
 			/* Default filename */
-			strnfmt(tmp, 1024, "%s.prf", player_name);
+			strnfmt(ftmp, 80, "%s.prf", player_name);
 
 			/* Ask for a file */
-			if (!askfor_aux(tmp, 80)) continue;
+			if (!askfor_aux(ftmp, 80)) continue;
 
 			/* Process the given filename */
-			if (0 != process_pref_file(tmp))
+			if (boost::filesystem::portable_name(std::string(ftmp)) && \
+				0 == process_pref_file(ftmp))
 			{
-				/* Prompt */
-				msg_print("Could not load file!");
+				/* Success */
+				msg_format("Loaded '%s'.", ftmp);
+			}
+
+			else
+			{
+				/* Failure */
+				msg_format("Failed to load '%s'!", ftmp);
 			}
 		}
 
@@ -1738,16 +1745,25 @@ void do_cmd_macros(void)
 			prt("File: ", 18, 0);
 
 			/* Default filename */
-			strnfmt(tmp, 1024, "%s.prf", player_name);
+			strnfmt(tmp, 80, "%s.prf", player_name);
 
 			/* Ask for a file */
 			if (!askfor_aux(tmp, 80)) continue;
 
 			/* Dump the macros */
-			(void)macro_dump(tmp);
+			if (boost::filesystem::portable_name(std::string(tmp)) && \
+				0 == macro_dump(tmp))
+			{
+				/* Success */
+				msg_print("Appended macros.");
+			}
 
-			/* Prompt */
-			msg_print("Appended macros.");
+			else
+			{
+				/* Failure */
+				msg_format("Failed to write '%s'!", tmp);
+			}
+
 		}
 
 		/* Query a macro */
@@ -1860,11 +1876,19 @@ void do_cmd_macros(void)
 			/* Ask for a file */
 			if (!askfor_aux(tmp, 80)) continue;
 
-			/* Dump the macros */
-			(void)keymap_dump(tmp);
+			if (boost::filesystem::portable_name(std::string(tmp)) && \
+				0 == keymap_dump(tmp))
+			{
+				/* Success */
+				msg_print("Appended keymaps.");
+			}
 
-			/* Prompt */
-			msg_print("Appended keymaps.");
+			else
+			{
+				/* Failure */
+				msg_format("Failed to write '%s'!", tmp);
+			}
+
 		}
 
 		/* Query a keymap */
@@ -2069,7 +2093,18 @@ void do_cmd_visuals(void)
 			if (!askfor_aux(tmp, 70)) continue;
 
 			/* Process the given filename */
-			(void)process_pref_file(tmp);
+			if (boost::filesystem::portable_name(std::string(tmp)) && \
+				0 == process_pref_file(tmp))
+			{
+				/* Success */
+				msg_format("Loaded '%s'.", tmp);
+			}
+			else
+			{
+				/* Failure */
+				msg_format("Failed to load '%s'!", tmp);
+			}
+			
 		}
 
 		/* Dump monster attr/chars */
@@ -2087,44 +2122,59 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			/* Build the filename */
-			path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
-
-			/* Append to the file */
-			fff = my_fopen(buf, "a");
-
-			/* Failure */
-			if (!fff) continue;
-
-			/* Start dumping */
-			fprintf(fff, "\n\n");
-			fprintf(fff, "# Monster attr/char definitions\n\n");
-
-			/* Dump monsters */
-			for (i = 0; i < max_r_idx; i++)
+			if (! boost::filesystem::portable_name(std::string(tmp)))
 			{
-				monster_race *r_ptr = &r_info[i];
-
-				/* Skip non-entries */
-				if (!r_ptr->name) continue;
-
-				/* Dump a comment */
-				fprintf(fff, "# %s\n", r_ptr->name);
-
-				/* Dump the monster attr/char info */
-				fprintf(fff, "R:%d:0x%02X:0x%02X\n\n", i,
-				        static_cast<unsigned int>(r_ptr->x_attr),
-					static_cast<unsigned int>(r_ptr->x_char));
+				msg_format("Failed to write '%s'!", tmp);
 			}
 
-			/* All done */
-			fprintf(fff, "\n\n\n\n");
+			else
+				{
 
-			/* Close */
-			my_fclose(fff);
+				/* Build the filename */
+				path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
 
-			/* Message */
-			msg_print("Dumped monster attr/chars.");
+				/* Append to the file */
+				fff = my_fopen(buf, "a");
+
+				/* Failure */
+				if (!fff)
+				{
+					msg_format("Failed to write '%s'!", tmp);
+				}
+
+				else
+				{
+					/* Start dumping */
+					fprintf(fff, "\n\n");
+					fprintf(fff, "# Monster attr/char definitions\n\n");
+
+					/* Dump monsters */
+					for (i = 0; i < max_r_idx; i++)
+					{
+						monster_race *r_ptr = &r_info[i];
+
+						/* Skip non-entries */
+						if (!r_ptr->name) continue;
+
+						/* Dump a comment */
+						fprintf(fff, "# %s\n", r_ptr->name);
+
+						/* Dump the monster attr/char info */
+						fprintf(fff, "R:%d:0x%02X:0x%02X\n\n", i,
+							static_cast<unsigned int>(r_ptr->x_attr),
+							static_cast<unsigned int>(r_ptr->x_char));
+					}
+
+					/* All done */
+					fprintf(fff, "\n\n\n\n");
+
+					/* Close */
+					my_fclose(fff);
+
+					/* Message */
+					msg_print("Dumped monster attr/chars.");
+				}
+			}
 		}
 
 		/* Dump object attr/chars */
@@ -2142,43 +2192,59 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			/* Build the filename */
-			path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
-
-			/* Append to the file */
-			fff = my_fopen(buf, "a");
-
-			/* Failure */
-			if (!fff) continue;
-
-			/* Start dumping */
-			fprintf(fff, "\n\n");
-			fprintf(fff, "# Object attr/char definitions\n\n");
-
-			/* Dump objects */
-			for (i = 0; i < max_k_idx; i++)
+			if (! boost::filesystem::portable_name(std::string(tmp)))
 			{
-				object_kind *k_ptr = &k_info[i];
-
-				/* Skip non-entries */
-				if (!k_ptr->name) continue;
-
-				/* Dump a comment */
-				fprintf(fff, "# %s\n", k_ptr->name);
-
-				/* Dump the object attr/char info */
-				fprintf(fff, "K:%d:0x%02X:0x%02X\n\n", i,
-				        (byte)(k_ptr->x_attr), (byte)(k_ptr->x_char));
+				msg_format("Failed to write '%s'!", tmp);
 			}
 
-			/* All done */
-			fprintf(fff, "\n\n\n\n");
+			else
+			{
+				/* Build the filename */
+				path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
 
-			/* Close */
-			my_fclose(fff);
+				/* Append to the file */
+				fff = my_fopen(buf, "a");
 
-			/* Message */
-			msg_print("Dumped object attr/chars.");
+				/* Failure */
+				if (!fff)
+				{
+					msg_format("Failed to write '%s'!", tmp);
+				}
+
+				else
+				{
+
+					/* Start dumping */
+					fprintf(fff, "\n\n");
+					fprintf(fff, "# Object attr/char definitions\n\n");
+
+					/* Dump objects */
+					for (i = 0; i < max_k_idx; i++)
+					{
+						object_kind *k_ptr = &k_info[i];
+
+						/* Skip non-entries */
+						if (!k_ptr->name) continue;
+
+						/* Dump a comment */
+						fprintf(fff, "# %s\n", k_ptr->name);
+
+						/* Dump the object attr/char info */
+						fprintf(fff, "K:%d:0x%02X:0x%02X\n\n", i,
+							(byte)(k_ptr->x_attr), \
+								(byte)(k_ptr->x_char));
+					}
+
+					/* All done */
+					fprintf(fff, "\n\n\n\n");
+
+					/* Close */
+					my_fclose(fff);
+
+					/* Message */
+					msg_print("Dumped object attr/chars.");
+				}
+			}
 		}
 
 		/* Dump feature attr/chars */
@@ -2196,43 +2262,59 @@ void do_cmd_visuals(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			/* Build the filename */
-			path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
-
-			/* Append to the file */
-			fff = my_fopen(buf, "a");
-
-			/* Failure */
-			if (!fff) continue;
-
-			/* Start dumping */
-			fprintf(fff, "\n\n");
-			fprintf(fff, "# Feature attr/char definitions\n\n");
-
-			/* Dump features */
-			for (i = 0; i < max_f_idx; i++)
+			if (! boost::filesystem::portable_name(std::string(tmp)))
 			{
-				feature_type *f_ptr = &f_info[i];
-
-				/* Skip non-entries */
-				if (!f_ptr->name) continue;
-
-				/* Dump a comment */
-				fprintf(fff, "# %s\n", f_ptr->name);
-
-				/* Dump the feature attr/char info */
-				fprintf(fff, "F:%d:0x%02X:0x%02X\n\n", i,
-				        (byte)(f_ptr->x_attr), (byte)(f_ptr->x_char));
+				msg_format("Failed to write '%s'!", tmp);
 			}
 
-			/* All done */
-			fprintf(fff, "\n\n\n\n");
+			else
+			{
+				/* Build the filename */
+				path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
 
-			/* Close */
-			my_fclose(fff);
+				/* Append to the file */
+				fff = my_fopen(buf, "a");
 
-			/* Message */
-			msg_print("Dumped feature attr/chars.");
+				/* Failure */
+				if (!fff)
+				{
+					msg_format("Failed to write '%s'!", tmp);
+				}
+
+
+				else
+				{
+					/* Start dumping */
+					fprintf(fff, "\n\n");
+					fprintf(fff, "# Feature attr/char definitions\n\n");
+
+					/* Dump features */
+					for (i = 0; i < max_f_idx; i++)
+					{
+						feature_type *f_ptr = &f_info[i];
+
+						/* Skip non-entries */
+						if (!f_ptr->name) continue;
+
+						/* Dump a comment */
+						fprintf(fff, "# %s\n", f_ptr->name);
+
+						/* Dump the feature attr/char info */
+						fprintf(fff, "F:%d:0x%02X:0x%02X\n\n", i,
+							(byte)(f_ptr->x_attr), \
+								(byte)(f_ptr->x_char));
+					}
+
+					/* All done */
+					fprintf(fff, "\n\n\n\n");
+
+					/* Close */
+					my_fclose(fff);
+
+					/* Message */
+					msg_print("Dumped feature attr/chars.");
+				}
+			}
 		}
 
 		/* Modify monster attr/chars */
@@ -2494,7 +2576,15 @@ void do_cmd_colors(void)
 			if (!askfor_aux(tmp, 70)) continue;
 
 			/* Process the given filename */
-			(void)process_pref_file(tmp);
+			if (boost::filesystem::portable_name(std::string(tmp)) && \
+				0 == process_pref_file(tmp))
+			{
+				msg_format("Loaded '%s'.", tmp);
+			}
+			else
+			{
+				msg_format("Failed to load '%s'!", tmp);
+			}
 
 			/* Mega-Hack -- react to changes */
 			Term_xtra(TERM_XTRA_REACT, 0);
@@ -2518,51 +2608,66 @@ void do_cmd_colors(void)
 			/* Get a filename */
 			if (!askfor_aux(tmp, 70)) continue;
 
-			/* Build the filename */
-			path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
-
-			/* Append to the file */
-			fff = my_fopen(buf, "a");
-
-			/* Failure */
-			if (!fff) continue;
-
-			/* Start dumping */
-			fprintf(fff, "\n\n");
-			fprintf(fff, "# Color redefinitions\n\n");
-
-			/* Dump colors */
-			for (i = 0; i < 256; i++)
+			if (! boost::filesystem::portable_name(std::string(tmp)))
 			{
-				int kv = angband_color_table[i][0];
-				int rv = angband_color_table[i][1];
-				int gv = angband_color_table[i][2];
-				int bv = angband_color_table[i][3];
-
-				cptr name = "unknown";
-
-				/* Skip non-entries */
-				if (!kv && !rv && !gv && !bv) continue;
-
-				/* Extract the color name */
-				if (i < 16) name = color_names[i];
-
-				/* Dump a comment */
-				fprintf(fff, "# Color '%s'\n", name);
-
-				/* Dump the monster attr/char info */
-				fprintf(fff, "V:%d:0x%02X:0x%02X:0x%02X:0x%02X\n\n",
-				        i, kv, rv, gv, bv);
+				msg_format("Failed to write '%s'!", tmp);
 			}
 
-			/* All done */
-			fprintf(fff, "\n\n\n\n");
+			else
+			{
 
-			/* Close */
-			my_fclose(fff);
+				/* Build the filename */
+				path_build(buf, 1024, ANGBAND_DIR_USER, tmp);
 
-			/* Message */
-			msg_print("Dumped color redefinitions.");
+				/* Append to the file */
+				fff = my_fopen(buf, "a");
+
+				/* Failure */
+				if (!fff)
+				{
+					msg_format("Failed to write '%s'!", tmp);
+				}
+
+				else
+					{
+					/* Start dumping */
+					fprintf(fff, "\n\n");
+					fprintf(fff, "# Color redefinitions\n\n");
+
+					/* Dump colors */
+					for (i = 0; i < 256; i++)
+					{
+						int kv = angband_color_table[i][0];
+						int rv = angband_color_table[i][1];
+						int gv = angband_color_table[i][2];
+						int bv = angband_color_table[i][3];
+
+						cptr name = "unknown";
+
+						/* Skip non-entries */
+						if (!kv && !rv && !gv && !bv) continue;
+
+						/* Extract the color name */
+						if (i < 16) name = color_names[i];
+
+						/* Dump a comment */
+						fprintf(fff, "# Color '%s'\n", name);
+
+						/* Dump the monster attr/char info */
+						fprintf(fff, "V:%d:0x%02X:0x%02X:0x%02X:0x%02X\n\n",
+							i, kv, rv, gv, bv);
+					}
+
+					/* All done */
+					fprintf(fff, "\n\n\n\n");
+
+					/* Close */
+					my_fclose(fff);
+
+					/* Message */
+					msg_print("Dumped color redefinitions.");
+				}
+			}
 		}
 
 		/* Edit colors */
