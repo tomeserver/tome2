@@ -122,7 +122,7 @@ static void module_reset_dir(cptr dir, cptr new_path)
 	{
 		char user_path[1024];
 		/* copied from init_file_paths */
-		path_parse(user_path, 1024, PRIVATE_USER_PATH);
+		path_parse(user_path, 1024, getenv("TOMEHOME"));
 		strcat(user_path, USER_PATH_VERSION);
 		strnfmt(buf, 1024, "%s%s%s", user_path, PATH_SEP, new_path);
 
