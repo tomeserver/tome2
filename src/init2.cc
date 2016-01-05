@@ -210,7 +210,7 @@ void init_file_paths(char *path)
 		char user_path[1024];
 
 		/* Get an absolute path from the file name */
-		path_parse(user_path, 1024, PRIVATE_USER_PATH);
+		path_parse(user_path, 1024, getenv("TOMEHOME"));
 		strcat(user_path, USER_PATH_VERSION);
 		ANGBAND_DIR_USER = strdup(user_path);
 		ANGBAND_DIR_NOTE = strdup(user_path);
