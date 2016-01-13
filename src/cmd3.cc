@@ -43,6 +43,8 @@
 #include <memory>
 #include <utility>
 
+using boost::filesystem::portable_name;
+
 /*
  * Display p_ptr->inventory
  */
@@ -2098,13 +2100,24 @@ void do_cmd_html_dump()
 	/* Now restore the screen to dump it */
 	Term_load_from(save);
 
-	if (html)
-		html_screenshot(tmp_val);
-	else
-		help_file_screenshot(tmp_val);
+	if (! portable_name(tmp_val))
+	{
+		Term_erase(0, 0, 255);
+		msg_print("Dump failed!");
+		Term_fresh();
+		fix_message();
+	}
 
-	Term_erase(0, 0, 255);
-	msg_print("Dump saved.");
-	Term_fresh();
-	fix_message();
+	else
+	{
+		if (html)
+			html_screenshot(tmp_val);
+		else
+			help_file_screenshot(tmp_val);
+
+		Term_erase(0, 0, 255);
+		msg_print("Dump saved.");
+		Term_fresh();
+		fix_message();
+	}
 }
