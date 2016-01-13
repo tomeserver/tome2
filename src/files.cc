@@ -56,6 +56,9 @@
 
 #include <memory>
 #include <unordered_set>
+#include <boost/filesystem/path.hpp>
+
+using boost::filesystem::portable_name;
 
 /*
  * Extract the first few "tokens" from a buffer
@@ -2554,6 +2557,17 @@ errr file_character(cptr name, bool_ full)
 	FILE *fff = NULL;
 	char buf[1024];
 
+	if (! portable_name(name))
+	{
+		/* Message */
+		msg_format("Character sheet creation failed!");
+		msg_print(NULL);
+
+		/* Error */
+		return ( -1);
+	}
+
+
 	/* Build the filename */
 	path_build(buf, 1024, ANGBAND_DIR_USER, name);
 
@@ -2577,6 +2591,7 @@ errr file_character(cptr name, bool_ full)
 
 	/* Open the non-existing file */
 	if (fd < 0) fff = my_fopen(buf, "w");
+
 
 	/* Invalid file */
 	if (!fff)
