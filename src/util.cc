@@ -28,10 +28,16 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <chrono>
 #include <thread>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 using boost::algorithm::iequals;
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
+
+using boost::filesystem::portable_name;
+using boost::filesystem::unique_path;
+using boost::filesystem::path;
 
 /*
 * Find a default user name from the system.
@@ -188,13 +194,16 @@ errr path_temp(char *buf, int max)
 	strnfmt(buf, max, "%s/t_%ud.%s", ANGBAND_DIR_XTRA, tmp_counter, rand_ext);
 	tmp_counter++;
 #else 
-	cptr s;
+	char s[max];
 
 	/* Temp file */
-	s = tmpnam(NULL);
-
-	/* Oops */
-	if (!s) return ( -1);
+	path temp = unique_path("%%%%-%%%%-%%%%-%%%%.txt");
+	const char * base_file_name = temp.c_str();
+	if (0 != path_build(s, max, ANGBAND_DIR_USER, base_file_name))
+	{
+		/* Oops */
+		return ( -1);
+	}
 
 	/* Format to length */
 	strnfmt(buf, max, "%s", s);
