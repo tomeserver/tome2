@@ -35,7 +35,6 @@ using boost::algorithm::iequals;
 using std::this_thread::sleep_for;
 using std::chrono::milliseconds;
 
-using boost::filesystem::portable_name;
 using boost::filesystem::unique_path;
 using boost::filesystem::path;
 

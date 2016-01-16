@@ -476,6 +476,9 @@ static void spoil_obj_desc(cptr fname)
 			/* Hack -- Skip Ring of Powers */
 			if (k == 785) continue;
 
+			/* Hack -- Skip mimic cloaks */
+			if (k_ptr == 618) continue;
+
 			/* Save the index */
 			who[n++] = k;
 		}
