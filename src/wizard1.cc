@@ -477,7 +477,7 @@ static void spoil_obj_desc(cptr fname)
 			if (k == 785) continue;
 
 			/* Hack -- Skip mimic cloaks */
-			if (k_ptr == 618) continue;
+			if (k == 618) continue;
 
 			/* Save the index */
 			who[n++] = k;
