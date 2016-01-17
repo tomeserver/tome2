@@ -3430,7 +3430,10 @@ bool_ show_file(cptr name, cptr what, int line, int mode)
 			strcpy(tmp, "help.hlp");
 			if (askfor_aux(tmp, 80))
 			{
-				if (!show_file(tmp, NULL, 0, mode)) k = ESCAPE;
+				if (! portable_name(std::string(tmp)) || ! show_file(tmp, NULL, 0, mode))
+				{
+					k = ESCAPE;
+				}
 			}
 		}
 
