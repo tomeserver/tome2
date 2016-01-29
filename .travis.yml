@@ -1,0 +1,5 @@
+language: cpp
+
+before_install: sudo apt-get install cmake build-essential libboost-all-dev libjansson-dev pkg-config
+
+script: cmake -DSYSTEM_INSTALL:BOOL=true . && make
