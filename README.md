@@ -1,4 +1,7 @@
-ToME is a [rogue-like](https://en.wikipedia.org/wiki/Roguelike) game.
+## tome2 (dgamelaunch)
+[![Build Status](https://api.travis-ci.org/tomeserver/tome2.png)](https://travis-ci.org/tomeserver/tome2/)
+
+ToME is a [rogue-like](https://en.wikipedia.org/wiki/Roguelike) game. This fork is intended for use with dgamelaunch. See https://github.com/tomeserver/dgamelaunch/tree/tome for instructions on setting up a ToME dgamelaunch server.
 
 ![Screenshot](/doc/images/screenshot.png)
 
